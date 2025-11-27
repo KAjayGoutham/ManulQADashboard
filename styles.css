@@ -232,3 +232,94 @@ body.dark-mode #importModuleList {
 body.dark-mode #importModuleList .form-check:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
+
+/* Comment History Styles */
+.collapse-toggle {
+    transition: transform 0.2s ease;
+    text-decoration: none !important;
+}
+
+.collapse-toggle:hover {
+    transform: scale(1.1);
+}
+
+.comment-history-row {
+    transition: all 0.3s ease;
+}
+
+.comment-history-container {
+    background-color: var(--light-bg);
+    border-top: 1px solid var(--border-color);
+}
+
+.comment-history-content {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.comment-card {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid;
+    background-color: var(--card-bg);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comment-card:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.comment-failure {
+    border-left-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.comment-fix {
+    border-left-color: #10b981;
+    background-color: #f0fdf4;
+}
+
+body.dark-mode .comment-failure {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+body.dark-mode .comment-fix {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.add-comment-form {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.badge-sm {
+    font-size: 0.7rem;
+    padding: 0.25em 0.5em;
+}
+
+.compact-view,
+.full-view {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

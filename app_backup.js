@@ -8,12 +8,12 @@ const STORAGE_KEY = 'qa_dashboard_modules';
 
 // Default sample data
 const SAMPLE_DATA = [
-    { id: '1', name: 'Authentication Service', status: 'Passed', reason: '', failures: 0, lastUpdated: new Date().toISOString(), channels: { voice: true, sms: true, chat: true, email: true }, commentHistory: [] },
-    { id: '2', name: 'Payment Gateway', status: 'Failed', reason: 'Timeout on API response', failures: 5, lastUpdated: new Date(Date.now() - 86400000).toISOString(), channels: { voice: true, sms: false, chat: true, email: true }, commentHistory: [{ type: 'failure', comment: 'API timeout after 30 seconds', timestamp: new Date(Date.now() - 86400000).toISOString() }] },
-    { id: '3', name: 'User Profile', status: 'In Progress', reason: 'Pending UI tests', failures: 0, lastUpdated: new Date(Date.now() - 3600000).toISOString(), channels: { voice: true, sms: true, chat: true, email: true }, commentHistory: [] },
-    { id: '4', name: 'Search Engine', status: 'Passed', reason: '', failures: 1, lastUpdated: new Date().toISOString(), channels: { voice: true, sms: true, chat: true, email: true }, commentHistory: [{ type: 'fix', comment: 'Fixed indexing issue', timestamp: new Date().toISOString() }] },
-    { id: '5', name: 'Notifications', status: 'Blocked', reason: 'Waiting for backend fix', failures: 0, lastUpdated: new Date(Date.now() - 172800000).toISOString(), channels: { voice: false, sms: false, chat: false, email: false }, commentHistory: [] },
-    { id: '6', name: 'Reporting Module', status: 'Failed', reason: 'Calculation error in totals', failures: 3, lastUpdated: new Date().toISOString(), channels: { voice: true, sms: true, chat: false, email: true }, commentHistory: [] }
+    { id: '1', name: 'Authentication Service', status: 'Passed', reason: '', failures: 0, lastUpdated: new Date().toISOString(), channels: { voice: true, sms: true, chat: true, email: true } },
+    { id: '2', name: 'Payment Gateway', status: 'Failed', reason: 'Timeout on API response', failures: 5, lastUpdated: new Date(Date.now() - 86400000).toISOString(), channels: { voice: true, sms: false, chat: true, email: true } },
+    { id: '3', name: 'User Profile', status: 'In Progress', reason: 'Pending UI tests', failures: 0, lastUpdated: new Date(Date.now() - 3600000).toISOString(), channels: { voice: true, sms: true, chat: true, email: true } },
+    { id: '4', name: 'Search Engine', status: 'Passed', reason: '', failures: 1, lastUpdated: new Date().toISOString(), channels: { voice: true, sms: true, chat: true, email: true } },
+    { id: '5', name: 'Notifications', status: 'Blocked', reason: 'Waiting for backend fix', failures: 0, lastUpdated: new Date(Date.now() - 172800000).toISOString(), channels: { voice: false, sms: false, chat: false, email: false } },
+    { id: '6', name: 'Reporting Module', status: 'Failed', reason: 'Calculation error in totals', failures: 3, lastUpdated: new Date().toISOString(), channels: { voice: true, sms: true, chat: false, email: true } }
 ];
 
 let modules = [];
@@ -50,10 +50,6 @@ function loadModules() {
                     m.channels = { voice: true, sms: true, chat: true, email: true };
                     migrated = true;
                 }
-                if (!m.commentHistory) {
-                    m.commentHistory = [];
-                    migrated = true;
-                }
             });
             if (migrated) saveModules();
         } catch (e) {
@@ -83,8 +79,7 @@ function addModule(module) {
         id: Date.now().toString(),
         environment: currentEnvironment,
         lastUpdated: new Date().toISOString(),
-        channels: { voice: true, sms: true, chat: true, email: true },
-        commentHistory: module.commentHistory || []
+        channels: { voice: true, sms: true, chat: true, email: true }
     });
     saveModules();
 }
@@ -251,24 +246,9 @@ function renderModuleList() {
     }
 
     emptyState.classList.add('d-none');
-    tbody.innerHTML = filtered.map(m => {
-        const isExpanded = expandedModules.has(m.id);
-        const rowStyle = isExpanded ? 'display: table-row;' : 'display: none;';
-        const iconClass = isExpanded ? 'bi-chevron-down' : 'bi-chevron-right';
-
-        return `
+    tbody.innerHTML = filtered.map(m => `
         <tr>
-            <td class="ps-4 fw-medium">
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-sm btn-link p-0 me-2 text-muted collapse-toggle" 
-                            onclick="toggleCommentHistory('${m.id}')" 
-                            id="toggle-${m.id}"
-                            title="Toggle comment history">
-                        <i class="bi ${iconClass}"></i>
-                    </button>
-                    <span>${m.name}</span>
-                </div>
-            </td>
+            <td class="ps-4 fw-medium">${m.name}</td>
             <td>${renderChannelPills(m)}</td>
             <td>
                 <div class="dropdown">
@@ -295,275 +275,8 @@ function renderModuleList() {
                 </button>
             </td>
         </tr>
-        <tr class="comment-history-row" id="history-row-${m.id}" style="${rowStyle}">
-            <td colspan="7" class="p-0">
-                <div class="comment-history-container">
-                    ${renderCommentHistory(m)}
-                </div>
-            </td>
-        </tr>
-    `;
-    }).join('');
+    `).join('');
 }
-
-// --- Comment History Functions ---
-
-// Render comment history section
-function renderCommentHistory(module) {
-    const history = module.commentHistory || [];
-    const latestComments = history.slice(-2).reverse();
-
-    return `
-        <div class="comment-history-content p-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="mb-0 fw-bold text-muted">
-                    <i class="bi bi-chat-left-text me-2"></i>Comment History
-                    ${history.length > 0 ? `<span class="badge bg-secondary ms-2">${history.length}</span>` : ''}
-                </h6>
-                <button class="btn btn-sm btn-primary" onclick="showAddCommentForm('${module.id}')">
-                    <i class="bi bi-plus-lg me-1"></i>Add Comment
-                </button>
-            </div>
-            
-            <div id="add-comment-form-${module.id}" class="add-comment-form mb-3" style="display: none;">
-                <div class="card border-0 bg-light">
-                    <div class="card-body p-3">
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold">Comment Type</label>
-                            <select class="form-select form-select-sm" id="comment-type-${module.id}">
-                                <option value="failure">Failure Reason</option>
-                                <option value="fix">Fix Reason</option>
-                            </select>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold">Comment</label>
-                            <textarea class="form-control form-control-sm" id="comment-text-${module.id}" rows="2" placeholder="Enter your comment..."></textarea>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-primary" onclick="saveComment('${module.id}')">
-                                <i class="bi bi-check-lg me-1"></i>Save
-                            </button>
-                            <button class="btn btn-sm btn-light" onclick="hideAddCommentForm('${module.id}')">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="comment-list" id="comment-list-${module.id}">
-                ${history.length === 0 ? `
-                    <div class="text-center text-muted py-3">
-                        <i class="bi bi-inbox fs-4"></i>
-                        <p class="small mb-0 mt-2">No comments yet. Add one to track failures and fixes.</p>
-                    </div>
-                ` : `
-                    <div class="compact-view" id="compact-view-${module.id}">
-                        ${latestComments.map(comment => renderCommentCard(comment, module.id)).join('')}
-                        ${history.length > 2 ? `
-                            <div class="text-center mt-2">
-                                <button class="btn btn-sm btn-link text-muted" onclick="showAllComments('${module.id}')">
-                                    <i class="bi bi-chevron-down me-1"></i>Show ${history.length - 2} more comment${history.length - 2 > 1 ? 's' : ''}
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="full-view" id="full-view-${module.id}" style="display: none;">
-                        ${history.slice().reverse().map(comment => renderCommentCard(comment, module.id)).join('')}
-                        <div class="text-center mt-2">
-                            <button class="btn btn-sm btn-link text-muted" onclick="showCompactComments('${module.id}')">
-                                <i class="bi bi-chevron-up me-1"></i>Show less
-                            </button>
-                        </div>
-                    </div>
-                `}
-            </div>
-        </div>
-    `;
-}
-
-// Render individual comment card with edit/delete buttons
-function renderCommentCard(comment, moduleId) {
-    const typeClass = comment.type === 'failure' ? 'comment-failure' : 'comment-fix';
-    const typeIcon = comment.type === 'failure' ? 'bi-exclamation-circle' : 'bi-check-circle';
-    const typeLabel = comment.type === 'failure' ? 'Failure' : 'Fix';
-    const commentId = comment.timestamp;
-
-    return `
-        <div class="comment-card ${typeClass} mb-2" id="comment-${commentId}">
-            <div class="d-flex align-items-start">
-                <i class="bi ${typeIcon} me-2 mt-1"></i>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-start mb-1">
-                        <div>
-                            <span class="badge badge-sm ${comment.type === 'failure' ? 'bg-danger' : 'bg-success'}">${typeLabel}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small">${formatDate(comment.timestamp)}</span>
-                            <div class="comment-actions">
-                                <button class="btn btn-sm btn-link p-0 text-primary" onclick="editComment('${moduleId}', '${commentId}')" title="Edit comment">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                                <button class="btn btn-sm btn-link p-0 text-danger ms-1" onclick="deleteComment('${moduleId}', '${commentId}')" title="Delete comment">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="mb-0 small comment-text" id="comment-text-${commentId}">${comment.comment}</p>
-                    
-                    <div class="edit-comment-form mt-2" id="edit-form-${commentId}" style="display: none;">
-                        <div class="mb-2">
-                            <select class="form-select form-select-sm" id="edit-type-${commentId}">
-                                <option value="failure" ${comment.type === 'failure' ? 'selected' : ''}>Failure Reason</option>
-                                <option value="fix" ${comment.type === 'fix' ? 'selected' : ''}>Fix Reason</option>
-                            </select>
-                        </div>
-                        <textarea class="form-control form-control-sm mb-2" id="edit-text-${commentId}" rows="2">${comment.comment}</textarea>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-primary" onclick="saveEditComment('${moduleId}', '${commentId}')">
-                                <i class="bi bi-check-lg me-1"></i>Save
-                            </button>
-                            <button class="btn btn-sm btn-light" onclick="cancelEditComment('${commentId}')">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Track expanded states
-const expandedModules = new Set();
-
-// Toggle comment history visibility
-window.toggleCommentHistory = function (moduleId) {
-    const historyRow = document.getElementById(`history-row-${moduleId}`);
-    const toggleBtn = document.getElementById(`toggle-${moduleId}`);
-    const icon = toggleBtn.querySelector('i');
-
-    if (historyRow.style.display === 'none') {
-        historyRow.style.display = 'table-row';
-        icon.classList.remove('bi-chevron-right');
-        icon.classList.add('bi-chevron-down');
-        expandedModules.add(moduleId);
-    } else {
-        historyRow.style.display = 'none';
-        icon.classList.remove('bi-chevron-down');
-        icon.classList.add('bi-chevron-right');
-        expandedModules.delete(moduleId);
-    }
-};
-
-// Show add comment form
-window.showAddCommentForm = function (moduleId) {
-    const form = document.getElementById(`add-comment-form-${moduleId}`);
-    form.style.display = 'block';
-    document.getElementById(`comment-text-${moduleId}`).focus();
-};
-
-// Hide add comment form
-window.hideAddCommentForm = function (moduleId) {
-    const form = document.getElementById(`add-comment-form-${moduleId}`);
-    form.style.display = 'none';
-    document.getElementById(`comment-text-${moduleId}`).value = '';
-};
-
-// Save new comment
-window.saveComment = function (moduleId) {
-    const type = document.getElementById(`comment-type-${moduleId}`).value;
-    const text = document.getElementById(`comment-text-${moduleId}`).value.trim();
-
-    if (!text) {
-        showToast('Please enter a comment', 'error');
-        return;
-    }
-
-    const module = modules.find(m => m.id === moduleId);
-    if (!module) return;
-
-    if (!module.commentHistory) module.commentHistory = [];
-
-    module.commentHistory.push({
-        type: type,
-        comment: text,
-        timestamp: new Date().toISOString()
-    });
-
-    updateModule(moduleId, { commentHistory: module.commentHistory });
-    showToast('Comment added successfully', 'success');
-    hideAddCommentForm(moduleId);
-};
-
-// Edit comment
-window.editComment = function (moduleId, commentId) {
-    const commentText = document.getElementById(`comment-text-${commentId}`);
-    const editForm = document.getElementById(`edit-form-${commentId}`);
-
-    commentText.style.display = 'none';
-    editForm.style.display = 'block';
-};
-
-// Cancel edit comment
-window.cancelEditComment = function (commentId) {
-    const commentText = document.getElementById(`comment-text-${commentId}`);
-    const editForm = document.getElementById(`edit-form-${commentId}`);
-
-    commentText.style.display = 'block';
-    editForm.style.display = 'none';
-};
-
-// Save edited comment
-window.saveEditComment = function (moduleId, commentId) {
-    const newType = document.getElementById(`edit-type-${commentId}`).value;
-    const newText = document.getElementById(`edit-text-${commentId}`).value.trim();
-
-    if (!newText) {
-        showToast('Please enter a comment', 'error');
-        return;
-    }
-
-    const module = modules.find(m => m.id === moduleId);
-    if (!module) return;
-
-    const commentIndex = module.commentHistory.findIndex(c => c.timestamp === commentId);
-    if (commentIndex !== -1) {
-        module.commentHistory[commentIndex].type = newType;
-        module.commentHistory[commentIndex].comment = newText;
-
-        updateModule(moduleId, { commentHistory: module.commentHistory });
-        showToast('Comment updated successfully', 'success');
-    }
-};
-
-// Delete comment
-window.deleteComment = function (moduleId, commentId) {
-    if (!confirm('Are you sure you want to delete this comment?')) {
-        return;
-    }
-
-    const module = modules.find(m => m.id === moduleId);
-    if (!module) return;
-
-    module.commentHistory = module.commentHistory.filter(c => c.timestamp !== commentId);
-
-    updateModule(moduleId, { commentHistory: module.commentHistory });
-    showToast('Comment deleted successfully', 'success');
-};
-
-// Show all comments
-window.showAllComments = function (moduleId) {
-    document.getElementById(`compact-view-${moduleId}`).style.display = 'none';
-    document.getElementById(`full-view-${moduleId}`).style.display = 'block';
-};
-
-// Show compact comments
-window.showCompactComments = function (moduleId) {
-    document.getElementById(`compact-view-${moduleId}`).style.display = 'block';
-    document.getElementById(`full-view-${moduleId}`).style.display = 'none';
-};
 
 // --- Helpers ---
 
